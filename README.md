@@ -20,9 +20,9 @@ Mission of this is
 
 ## Author
 [ryogaide](https://github.com/ryogaide)
-[Omoto]
-[Iwasaki]
-[Furuya]
+[keisuke-omoto](https://github.com/keisuke-omoto)
+[YoheiIwasaki](https://github.com/YoheiIwasaki)
+[TakashiFuruya](https://github.com/TakashiFuruya)
 
 ## Language
 Java
