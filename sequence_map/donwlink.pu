@@ -1,0 +1,28 @@
+@startuml
+title sequence_map_Downlink
+
+actor GS
+
+GS -> OBC : Change FROM address
+activate OBC
+OBC -> 5R8G : Change FROM address
+deactivate OBC
+opt Check CRC & Adrress
+    5R8G -> 5R8G : Change FROM address
+end
+
+GS -> OBC : Downlilnk Command & Time to finish
+activate OBC
+OBC -> 5R8G : Downlink Command
+
+OBC -> 5R8G : 5V switch ON
+activate 5R8G
+loop Donwlink
+    5R8G -> GS : Donwlink
+end
+note left of OBC : End of pass
+OBC -> 5R8G : 5V switch OFF
+deactivate 5R8G
+
+deactivate OBC
+@enduml
