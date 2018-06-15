@@ -18,12 +18,12 @@ COBC_OBC -> MDC_PIC         : MDC POWER ON command
 activate MDC_PIC
 MDC_PIC  -> COBC_OBC        : ack
 COBC_OBC -> MDC_PIC         : IMU & M/S function test command
-note over MDC_PIC           : sync with COBC_OBC
-note over MDC_PIC           : measure the M/S status
-note over COBC_OBC, MDC_PIC : measuring IMU in COBC_board and MDC_board
+rnote left of MDC_PIC           : sync with COBC_OBC
+rnote left of MDC_PIC           : measure the M/S status
+hnote over COBC_OBC, MDC_PIC : measuring IMU in COBC_board and MDC_board
 MDC_PIC  -> COBC_OBC        : send Can data of IMU data and M/S status
 COBC_OBC -> ground_station  : downlink the IMU data and M/S status
-note over ground_station    : check the status of \nmeasuring IMU function and M/S
+rnote over ground_station    : check the status of \nmeasuring IMU function and M/S
 COBC_OBC -> MDC_PIC         : MDC POWER OFF command
 deactivate MDC_PIC
 
@@ -36,17 +36,17 @@ COBC_OBC -> RPI             : RPI POWER ON
 activate RPI
 RPI -> COBC_OBC             : ack
 COBC_OBC -> RPI             : camera function test command
-note over RPI               : sync with COBC_OBC
-note over RPI               : LED ON
-note over RPI               : take the photo with sutereo camera
-note over RPI               : take the movie with movie camera
-note over RPI               : LED OFF
-note over RPI               : resize the photo data
+rnote right of RPI               : sync with COBC_OBC
+rnote right of RPI               : LED ON
+rnote right of RPI               : take the photo with sutereo camera
+rnote right of RPI               : take the movie with movie camera
+rnote right of RPI               : LED OFF
+rnote right of RPI               : resize the photo data
 RPI -> COBC_OBC             : send the photo data
 COBC_OBC -> RPI             : RPI POWER OFF command
 deactivate RPI
 COBC_OBC -> ground_station  : send the data of photo and movie
-note over ground_station    : check taking the photo and movie \nis succsess or not
+rnote over ground_station    : check that taking the photo and movie \nis succsess or not
 
 == uplink the command ==
 ground_station -> COBC_OBC  : uplink the command
@@ -61,20 +61,20 @@ activate RPI
 RPI -> COBC_OBC             : ack
 COBC_OBC -> MDC_PIC         : start the membrane deployment command
 COBC_OBC -> RPI             : start the membrane deployment command
-note over MDC_PIC, RPI      : sync with COBC_OBC
-note over RPI               : LED ON
-note over RPI               : taking the phote with setereo camera
-note over RPI               : taking the movie with movie camera
-note over MDC_PIC           : measuring the IMU data
-note over MDC_PIC           : melt the gut of membrane
+hnote over MDC_PIC, RPI      : sync with COBC_OBC
+rnote right of RPI               : LED ON
+rnote right of RPI               : taking the phote with setereo camera
+rnote right of RPI               : taking the movie with movie camera
+rnote left of MDC_PIC           : measuring the IMU data
+rnote left of MDC_PIC           : melt the gut of membrane
 |||
 hnote over RPI,MDC_PIC       : wait the membrane deploymant
 |||
-note over RPI               : finish taking the movie
-note over MDC_PIC           : finish measuring the IMU data
-note over RPI               : taking the photo by sutereo camera
-note over RPI               : LED OFF
-note over RPI               : resize the photo data
+rnote right of RPI               : finish taking the movie
+rnote left of MDC_PIC           : finish measuring the IMU data
+rnote right of RPI               : taking the photo by sutereo camera
+rnote right of RPI               : LED OFF
+rnote right of RPI               : resize the photo data
 RPI -> COBC_OBC             : send the photo data
 COBC_OBC -> RPI             : RPI POWER OFF command
 deactivate RPI
@@ -82,12 +82,12 @@ MDC_PIC -> COBC_OBC         : send Can data of IMU data and M/S status
 COBC_OBC -> ground_station  : downlink the data of IMU and M/S status
 COBC_OBC -> MDC_PIC         : MDC POWER OFF command
 deactivate MDC_PIC
-note over ground_station    : check that membrane deployment is success or not
+rnote over ground_station    : check that membrane deployment is success or not
 
 == downlink the photo and movie ==
 ground_station -> COBC_OBC  : uplink the command
 COBC_OBC -> ground_station  : downlink the data of photo and movie
-note over ground_station    : check that membrane deployment is success or not
+rnote over ground_station    : check that membrane deployment is success or not
 
 == end the membrane deployment sequence ==
 @enduml
