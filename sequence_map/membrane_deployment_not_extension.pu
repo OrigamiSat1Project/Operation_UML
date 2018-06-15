@@ -1,0 +1,89 @@
+smembrane_deployment.pu
+
+@startuml
+title membrane deployment
+
+participant ground_station
+participant COBC_OBC
+participant MDC_PIC
+participant RPI
+
+== start the membrane deployment sequence ==
+activate COBC_OBC
+ground_station -> COBC_OBC: uplink the command \n(1:mode check) \n(2:MDC POWER ON) \n(3:IMU measure on MDC) \n(4:IMU measure on CIB) \n(5:IMU send from MDC to OBC) \n(6:downlink IMU datas)
+COBC_OBC -> ground_station: downlink the command 
+
+== IMU & M/S function test ==
+COBC_OBC -> MDC_PIC         : MDC POWER ON command
+activate MDC_PIC
+MDC_PIC  -> COBC_OBC        : ack
+COBC_OBC -> MDC_PIC         : IMU & M/S function test command
+rnote left of MDC_PIC       : sync with COBC_OBC
+rnote left of MDC_PIC       : measure the M/S status
+hnote over COBC_OBC, MDC_PIC: measuring IMU in COBC_board and MDC_board
+MDC_PIC  -> COBC_OBC        : send Can data of IMU data and M/S status
+COBC_OBC -> ground_station  : downlink the IMU data and M/S status
+rnote over ground_station   : check the status of \nmeasuring IMU function and M/S
+COBC_OBC -> MDC_PIC         : MDC POWER OFF command
+deactivate MDC_PIC
+
+== uplink the command ==
+ground_station -> COBC_OBC  : uplink the command
+COBC_OBC -> ground_station  : downlink the command
+
+== side camera function test ==
+COBC_OBC -> RPI             : RPI POWER ON
+activate RPI
+RPI -> COBC_OBC             : ack
+COBC_OBC -> RPI             : camera function test command
+rnote right of RPI          : sync with COBC_OBC
+rnote right of RPI          : side LED ON
+rnote right of RPI          : take the photo with side camera
+rnote right of RPI          : side LED OFF
+rnote right of RPI          : resize the photo data
+RPI -> COBC_OBC             : send the photo data
+COBC_OBC -> RPI             : RPI POWER OFF command
+deactivate RPI
+COBC_OBC -> ground_station  : send the data of photo
+rnote over ground_station   : check that taking the photo \nis succsess or not
+
+== uplink the command ==
+ground_station -> COBC_OBC  : uplink the command
+COBC_OBC -> ground_station  : downlink the command
+
+== membrane deployment ==
+COBC_OBC -> MDC_PIC         : MDC POWER ON command
+activate MDC_PIC
+MDC_PIC -> COBC_OBC         : ack
+COBC_OBC -> RPI             : RPI POWER ON command
+activate RPI
+RPI -> COBC_OBC             : ack
+COBC_OBC -> MDC_PIC         : start the membrane deployment command
+COBC_OBC -> RPI             : start the membrane deployment command
+hnote over MDC_PIC, RPI     : sync with COBC_OBC
+rnote left of MDC_PIC       : measuring the IMU data
+rnote left of MDC_PIC       : melt the gut of membrane
+|||
+hnote over RPI,MDC_PIC      : wait the membrane deploymant
+|||
+rnote left of MDC_PIC       : finish measuring the IMU data
+rnote right of RPI          : side LED ON
+rnote right of RPI          : taking the photo by side camera
+rnote right of RPI          : side LED OFF
+rnote right of RPI          : resize the photo data
+RPI -> COBC_OBC             : send the photo data
+COBC_OBC -> RPI             : RPI POWER OFF command
+deactivate RPI
+MDC_PIC -> COBC_OBC         : send Can data of IMU data and M/S status
+COBC_OBC -> ground_station  : downlink the data of IMU and M/S status
+COBC_OBC -> MDC_PIC         : MDC POWER OFF command
+deactivate MDC_PIC
+rnote over ground_station   : check that membrane deployment is success or not
+
+== downlink the photo and movie ==
+ground_station -> COBC_OBC  : uplink the command
+COBC_OBC -> ground_station  : downlink the data of photo
+rnote over ground_station   : check that membrane deployment is success or not
+
+== end the membrane deployment sequence ==
+@enduml
