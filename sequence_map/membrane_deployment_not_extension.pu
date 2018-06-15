@@ -1,4 +1,4 @@
-smembrane_deployment.pu
+smembrane_deployment_no_extension.pu
 
 @startuml
 title membrane deployment
@@ -21,7 +21,7 @@ COBC_OBC -> MDC_PIC         : IMU & M/S function test command
 rnote left of MDC_PIC       : sync with COBC_OBC
 rnote left of MDC_PIC       : measure the M/S status
 hnote over COBC_OBC, MDC_PIC: measuring IMU in COBC_board and MDC_board
-MDC_PIC  -> COBC_OBC        : send Can data of IMU data and M/S status
+MDC_PIC  -> COBC_OBC        : send IMU data and M/S status
 COBC_OBC -> ground_station  : downlink the IMU data and M/S status
 rnote over ground_station   : check the status of \nmeasuring IMU function and M/S
 COBC_OBC -> MDC_PIC         : MDC POWER OFF command
@@ -74,7 +74,7 @@ rnote right of RPI          : resize the photo data
 RPI -> COBC_OBC             : send the photo data
 COBC_OBC -> RPI             : RPI POWER OFF command
 deactivate RPI
-MDC_PIC -> COBC_OBC         : send Can data of IMU data and M/S status
+MDC_PIC -> COBC_OBC         : send IMU data and M/S status
 COBC_OBC -> ground_station  : downlink the data of IMU and M/S status
 COBC_OBC -> MDC_PIC         : MDC POWER OFF command
 deactivate MDC_PIC
