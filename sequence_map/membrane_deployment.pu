@@ -1,8 +1,0 @@
-smembrane_deployment.pu
-
-@startuml
-title membrane deployment
-ground_station -> COBC_OBC: uplink the \ncommand
-COBC_OBC -> ground_station: downlink the \ncommand
-COBC_OBC -> MDC_PIC: 
-@enduml
