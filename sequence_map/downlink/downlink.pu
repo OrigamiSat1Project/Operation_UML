@@ -3,6 +3,15 @@ title sequence_map_Downlink
 
 actor GS
 
+GS -> OBC : Send Command that Donwlink Thumbnail
+activate OBC
+OBC -> RasPi : Choose data
+activate RasPi
+RasPi -> OBC : Send data
+deactivate RasPi
+OBC -> 5R8G : Send data
+deactivate OBC
+
 GS -> OBC : Change FROM address
 activate OBC
 OBC -> 5R8G : Change FROM address
@@ -18,11 +27,97 @@ OBC -> 5R8G : Downlink Command
 OBC -> 5R8G : 5V switch ON
 activate 5R8G
 loop Donwlink
-    5R8G -> GS : Donwlink
+    5R8G -> GS : Donwlink Thumbnail
 end
 note left of OBC : End of pass
 OBC -> 5R8G : 5V switch OFF
 deactivate 5R8G
-
 deactivate OBC
+||100||
+GS -> GS : Check Thumbnail
+GS -> GS : Choose screen resolution
+
+
+GS -> OBC : Send Command that Donwlink Files
+activate OBC
+OBC -> RasPi : Choose data
+activate RasPi
+RasPi -> OBC : Send data
+deactivate RasPi
+OBC -> 5R8G : Send data
+deactivate OBC
+
+GS -> OBC : Change FROM address
+activate OBC
+OBC -> 5R8G : Change FROM address
+deactivate OBC
+opt Check CRC & Adrress
+    5R8G -> 5R8G : Change FROM address
+end
+
+GS -> OBC : Downlilnk Command & Time to finish
+activate OBC
+OBC -> 5R8G : Downlink Command
+
+OBC -> 5R8G : 5V switch ON
+activate 5R8G
+loop Donwlink
+    5R8G -> GS : Donwlink Files
+end
+note left of OBC : End of pass
+OBC -> 5R8G : 5V switch OFF
+deactivate 5R8G
+deactivate OBC
+||100||
+
+GS -> GS : FM or 5R8G
+GS -> OBC : Send Command that Donwlink various data
+activate OBC
+OBC -> MDC : Choose data
+activate MDC
+MDC -> OBC : Send data
+deactivate MDC
+deactivate OBC
+
+alt 5R8G
+    OBC -> 5R8G : Send data
+    deactivate OBC
+
+    GS -> OBC : Change FROM address
+    activate OBC
+    OBC -> 5R8G : Change FROM address
+    deactivate OBC
+    opt Check CRC & Adrress
+        5R8G -> 5R8G : Change FROM address
+    end
+
+    GS -> OBC : Downlilnk Command & Time to finish
+    activate OBC
+    OBC -> 5R8G : Downlink Command
+
+    OBC -> 5R8G : 5V switch ON
+    activate 5R8G
+    loop Donwlink
+        5R8G -> GS : Donwlink various data
+    end
+    note left of OBC : End of pass
+    OBC -> 5R8G : 5V switch OFF
+    deactivate 5R8G
+    deactivate OBC
+    ||100||
+else FM
+    OBC -> CIB : Send data
+    deactivate OBC
+    GS -> OBC : Downlilnk Command
+    activate OBC
+    OBC -> CIB : Downlink Command
+    activate CIB
+    CIB -> GS : Donwlink various data
+    GS -> OBC : Finish donwlink
+    OBC -> CIB : Finish downlink
+    deactivate CIB
+    deactivate OBC
+    ||100||
+end
+
 @enduml
