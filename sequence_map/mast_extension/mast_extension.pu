@@ -1,4 +1,98 @@
 @startuml
-title Mast_Extension
+title mast extension sequence
 
+participant ground_station
+participant COBC_OBC
+participant MDC_PIC
+participant RPI
+
+activate COBC_OBC
+==start mast extension sequence==
+ground_station -> COBC_OBC  : uplink the command
+COBC_OBC -> ground_station  : downlink the command response
+
+==IMU function check==
+COBC_OBC -> COBC_OBC            : check the mode
+COBC_OBC -> MDC_PIC             : MDC POWER ON command
+activate MDC_PIC
+MDC_PIC -> COBC_OBC             : ack
+COBC_OBC -> MDC_PIC             : IMU measure check command
+hnote over MDC_PIC              : sync with OBC
+rnote left of MDC_PIC           : start IMU measuring
+rnote left of MDC_PIC           : end IMU measuring
+MDC_PIC -> COBC_OBC             : send IMU data
+COBC_OBC -> ground_station      : downlink the IMU data
+note over ground_station        : check the status of IMU data
+COBC_OBC -> MDC_PIC             : MDC POWER OFF command
+deactivate MDC_PIC
+
+==uplink time sync and unlock HRM command==
+ground_station -> COBC_OBC  : uplink the command
+COBC_OBC -> ground_station  : downlink the command response
+
+==time sync and unlock HRM==
+COBC_OBC -> COBC_OBC            : check the mode
+COBC_OBC -> MDC_PIC             : MDC POWER ON command
+activate MDC_PIC
+COBC_OBC -> RPI                 : RPI POWER ON command
+activate RPI
+COBC_OBC -> MDC_PIC             : TIME SYNC command
+COBC_OBC -> RPI                 : TIME SYNC command
+COBC_OBC -> MDC_PIC             : IMU measure check command
+hnote over MDC_PIC              : sync with OBC
+rnote left of MDC_PIC           : start IMU measuring
+note over COBC_OBC              : start melting gut
+note over COBC_OBC              : end melting gut 
+rnote left of MDC_PIC           : end IMU measuring
+MDC_PIC -> COBC_OBC             : send IMU data
+COBC_OBC -> ground_station      : downlink the IMU data
+ground_station -> ground_station : check HRM
+
+==uplink mast extension command==
+ground_station -> COBC_OBC  : uplink the command
+COBC_OBC -> ground_station  : downlink the command response
+
+==mast extension==
+COBC_OBC -> MDC_PIC             : TIME SYNC command
+COBC_OBC -> RPI                 : TIME SYNC command
+loop time < specified time
+    COBC_OBC -> COBC_OBC        :check the time
+end
+COBC_OBC -> COBC_OBC            : check the mode
+COBC_OBC -> MDC_PIC             : IMU measure check command
+hnote over MDC_PIC              : sync with OBC
+rnote left of MDC_PIC           : start IMU measuring
+note over COBC_OBC              : start mast extension
+loop mast extension time < specified time
+    COBC_OBC -> COBC_OBC        : check  current and encoder value
+end
+note over COBC_OBC              : end mast extension
+COBC_OBC -> COBC_OBC            : get encoder value
+COBC_OBC -> RPI                 : RPI POWER OFF command
+deactivate RPI
+MDC_PIC -> COBC_OBC             : send IMU data
+deactivate MDC_PIC
+COBC_OBC -> ground_station      : downlink the IMU data
+
+==uplink take pictures command==
+ground_station -> COBC_OBC  : uplink the command
+COBC_OBC -> ground_station  : downlink the command response
+
+==take pictures with stereo camera==
+ground_station -> COBC_OBC      : TIME SYNC 
+loop time < specified time
+    COBC_OBC -> COBC_OBC        : check the time
+end
+COBC_OBC -> RPI                 : RPI POWER ON command
+activate RPI
+COBC_OBC -> COBC_OBC            : check the mode
+COBC_OBC -> RPI                 : LED ON command
+COBC_OBC -> RPI                 : TAKE A PICTURE WITH STEREO CAMERA command
+RPI -> RPI                      : resize image
+COBC_OBC -> RPI                 : LED OFF command
+RPI -> COBC_OBC                 : send image data
+COBC_OBC -> RPI                 : RPI POWER OFF command
+deactivate RPI
+COBC_OBC -> ground_station      : downlink the image data
+ground_station -> ground_station: check the length of mast
 @enduml
