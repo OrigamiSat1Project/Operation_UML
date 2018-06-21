@@ -1,98 +1,157 @@
 @startuml
 title mast extension sequence
 
-participant ground_station
-participant COBC_OBC
-participant MDC_PIC
+participant GS
+participant CIB
+database EEPROM
+participant OBC
 participant RPI
+participant MDC
 
-activate COBC_OBC
+activate OBC
+activate CIB
 ==start mast extension sequence==
-ground_station -> COBC_OBC  : uplink the command
-COBC_OBC -> ground_station  : downlink the command response
-
+GS -> OBC   : Uplink The Command
+OBC --> GS   : Downlink The Command Response
 ==IMU function check==
-COBC_OBC -> COBC_OBC            : check the mode
-COBC_OBC -> MDC_PIC             : MDC POWER ON command
-activate MDC_PIC
-MDC_PIC -> COBC_OBC             : ack
-COBC_OBC -> MDC_PIC             : IMU measure check command
-hnote over MDC_PIC              : sync with OBC
-rnote left of MDC_PIC           : start IMU measuring
-rnote left of MDC_PIC           : end IMU measuring
-MDC_PIC -> COBC_OBC             : send IMU data
-COBC_OBC -> ground_station      : downlink the IMU data
-note over ground_station        : check the status of IMU data
-COBC_OBC -> MDC_PIC             : MDC POWER OFF command
-deactivate MDC_PIC
+OBC -> OBC  : Check The Mode
+opt power shortage
+    OBC -> GS   : Downlink The Power Value
+    note over GS    : Return start mast extension sequence
+end
 
-==uplink time sync and unlock HRM command==
-ground_station -> COBC_OBC  : uplink the command
-COBC_OBC -> ground_station  : downlink the command response
+OBC -> MDC  : Turn On MDC
+activate MDC
+MDC --> OBC : ACK
+OBC -> MDC  : Synchronize Time
+OBC -> MDC  : Transfer Measure IMU Command
+OBC -> CIB  : Transfer Measure IMU Command
+OBC -> MDC  : Transfer Send IMU Data Command
+MDC --> OBC : Send IMU Data
+CIB -> EEPROM : Save IMU Data
+OBC -> MDC  : Turn Off MDC
+deactivate MDC
+OBC -> GS   : Downlink The IMU Data
+GS  -> GS   : Check the status of IMU data
+opt IMU data are unexpected value
+    note over GS    : Return start mast extension sequence
+end
+
+==uplink synchronize time and unlock HRM command==
+GS -> OBC   : Uplink The Command
+OBC --> GS   : Downlink The Command Response
 
 ==time sync and unlock HRM==
-COBC_OBC -> COBC_OBC            : check the mode
-COBC_OBC -> MDC_PIC             : MDC POWER ON command
-activate MDC_PIC
-COBC_OBC -> RPI                 : RPI POWER ON command
+OBC -> OBC  : Check The Mode
+opt power shortage
+    OBC -> GS   : Downlink The Power Value
+note over GS    : Return command uplink phase
+end
+
+OBC -> MDC  : Turn On MDC
+activate MDC
+MDC --> OBC : ACK
+OBC -> RPI  : Turn On RPI
 activate RPI
-COBC_OBC -> MDC_PIC             : TIME SYNC command
-COBC_OBC -> RPI                 : TIME SYNC command
-COBC_OBC -> MDC_PIC             : IMU measure check command
-hnote over MDC_PIC              : sync with OBC
-rnote left of MDC_PIC           : start IMU measuring
-note over COBC_OBC              : start melting gut
-note over COBC_OBC              : end melting gut 
-rnote left of MDC_PIC           : end IMU measuring
-MDC_PIC -> COBC_OBC             : send IMU data
-COBC_OBC -> ground_station      : downlink the IMU data
-ground_station -> ground_station : check HRM
+RPI --> OBC : ACK
+OBC -> MDC  : Synchronize Time
+OBC -> RPI  : Synchronize Time
+OBC -> MDC  : Transfer Measure IMU Command
+OBC -> CIB  : Transfer Measure IMU Command
+OBC -> RPI  : Transfer Start Melting The Gut Command
+OBC -> RPI  : Transfer Stop Melting The Gut Command
+OBC -> MDC  : Transfer Send IMU Data Command
+MDC --> OBC : Send IMU Data
+CIB -> EEPROM : Save IMU Data
+OBC -> GS   : Downlink The IMU Data (UHF)
+opt HRM locked
+    note over GS        : Return command uplink phase
+end
 
 ==uplink mast extension command==
-ground_station -> COBC_OBC  : uplink the command
-COBC_OBC -> ground_station  : downlink the command response
+GS -> OBC   : Uplink The Command
+OBC --> GS   : Downlink The Command Response
 
 ==mast extension==
-COBC_OBC -> MDC_PIC             : TIME SYNC command
-COBC_OBC -> RPI                 : TIME SYNC command
+OBC -> MDC  : Synchronize Time
+OBC -> RPI  : Synchronize Time
 loop time < specified time
-    COBC_OBC -> COBC_OBC        :check the time
+    OBC -> OBC        : Check the time
 end
-COBC_OBC -> COBC_OBC            : check the mode
-COBC_OBC -> MDC_PIC             : IMU measure check command
-hnote over MDC_PIC              : sync with OBC
-rnote left of MDC_PIC           : start IMU measuring
-note over COBC_OBC              : start mast extension
-loop mast extension time < specified time
-    COBC_OBC -> COBC_OBC        : check  current and encoder value
+
+OBC -> OBC  : Check The Mode
+opt power shortage
+    OBC -> GS   : Downlink The Power Value
+    note over GS    : Return command uplink phase
 end
-note over COBC_OBC              : end mast extension
-COBC_OBC -> COBC_OBC            : get encoder value
-COBC_OBC -> RPI                 : RPI POWER OFF command
+
+OBC -> MDC  : Transfer Measure IMU Command
+OBC -> CIB  : Transfer Measure IMU Command
+OBC -> RPI  : Transfer Start Mast Extension Command
+loop mast extension time < TBD[s]
+    OBC -> OBC        : Get Current And Encoder Value
+    opt Encoder Value is unexpected
+        OBC -> RPI  : Turn Off RPI
+        OBC -> MDC  : Turn Off MDC
+        OBC -> GS   : Downlink Encoder Value
+        note over GS    : Return command uplink phase
+    end
+end
+
+OBC -> RPI  : Transfer Stop Mast Extension Command
+OBC -> OBC  : Get Encoder Value
+OBC -> RPI  : Turn Off RPI
 deactivate RPI
-MDC_PIC -> COBC_OBC             : send IMU data
-deactivate MDC_PIC
-COBC_OBC -> ground_station      : downlink the IMU data
+OBC -> MDC  : Transfer Send IMU Data Command
+MDC --> OBC : Send IMU Data
+OBC -> MDC  : Turn Off MDC
+CIB -> EEPROM : Save IMU Data
+deactivate MDC
+OBC -> GS   : Downlink The IMU And Encoder Data
+opt IMU and endoder data are unexpected
+    note over GS    : Return command uplink phase
+end
+
+opt Taking pictures is not implemented
+    alt Extension length > 1[m]
+        note over GS    : Finish mast extension sequence
+    else Extension length < 1[m]
+        note over GS    : Return command uplink phase
+    end
+end
 
 ==uplink take pictures command==
-ground_station -> COBC_OBC  : uplink the command
-COBC_OBC -> ground_station  : downlink the command response
+GS -> OBC   : Uplink The Command
+OBC --> GS   : Downlink The Command Response
 
 ==take pictures with stereo camera==
-ground_station -> COBC_OBC      : TIME SYNC 
+GS -> OBC   : Synchronize Time
 loop time < specified time
-    COBC_OBC -> COBC_OBC        : check the time
+    OBC -> OBC  : Check the time
 end
-COBC_OBC -> RPI                 : RPI POWER ON command
+
+OBC -> OBC  : Check The Mode
+opt power shortage
+    OBC -> GS   : Downlink The Power Value
+note over GS    : Return command uplink phase
+end
+
+OBC -> RPI  : Turn On RPI
 activate RPI
-COBC_OBC -> COBC_OBC            : check the mode
-COBC_OBC -> RPI                 : LED ON command
-COBC_OBC -> RPI                 : TAKE A PICTURE WITH STEREO CAMERA command
-RPI -> RPI                      : resize image
-COBC_OBC -> RPI                 : LED OFF command
-RPI -> COBC_OBC                 : send image data
-COBC_OBC -> RPI                 : RPI POWER OFF command
+RPI --> OBC : ACK
+OBC -> RPI  : Transfer Turn On LED Command
+OBC -> RPI  : Transfer Take A Picture Command (stereo camera)
+RPI -> RPI  : Resize Image
+OBC -> RPI  : Transfer Turn Off LED Command
+OBC -> RPI  : Transfer Send Image Data Command
+RPI --> OBC : Send Image Data (original and resized)
+OBC -> RPI  : RPI POWER OFF Command
 deactivate RPI
-COBC_OBC -> ground_station      : downlink the image data
-ground_station -> ground_station: check the length of mast
+OBC -> GS   : Downlink The Tmage Data
+alt Extension length > 1[m]
+    note over GS    : Finish mast extension sequence
+else Extension length < 1[m]
+    note over GS    : Return mast extension command uplink phase
+end
+
 @enduml
