@@ -1,0 +1,60 @@
+@startuml
+title TX_RX
+participant GroundStation
+participant RXCOBC
+database EEPLOM1
+database EEPLOM2
+participant TXCOBC
+participant OBC
+
+== VHF uplink ==
+GroundStation -> RXCOBC: through the Modem(RX) and uplink
+note right: if it is the AX.25 protocol signals
+RXCOBC -> EEPLOM1: write the command data with the specified address
+RXCOBC -> EEPLOM2: writre the command data with the specified address
+RXCOBC -> TXCOBC: send the command data address
+RXCOBC -> OBC: send the command data address
+TXCOBC -> EEPLOM1: read the comand
+TXCOBC -> EEPLOM1: check the CRC of the comand
+
+TXCOBC -> TXCOBC: signal status update
+
+ opt the command CRC in EEPLOM1 is not correct
+TXCOBC -> EEPLOM2: read the comand
+TXCOBC -> EEPLOM2: check the CRC of the comand
+TXCOBC -> TXCOBC: signal status update
+ end
+
+alt the command CRC in EEPLOM1 and the command CRC in EEPLOM2 aren't correct
+TXCOBC -> GroundStation: through the Modem(TX) and downlink (the signal is not correct)(TBD times?)
+TXCOBC -> TXCOBC: signal status update
+else
+TXCOBC -> GroundStation: through the Modem(TX) and downlink (the signal is correct)(TBD times?)
+TXCOBC -> TXCOBC: signal status update
+end
+
+
+
+== UHF downlink ==
+
+
+OBC -> OBC: switch Multiplexer
+OBC -> TXCOBC: downlink command and send EEPLOM address
+note left: after RXCOBC send OBC the command data address?
+OBC -> OBC: switch Multiplexer
+TXCOBC -> EEPLOM1: read that address
+TXCOBC -> TXCOBC: signal status update
+opt the command CRC in EEPLOM1 is not correct
+TXCOBC -> EEPLOM2: read the comand
+TXCOBC -> EEPLOM2: check the CRC of the comand
+TXCOBC -> TXCOBC: signal status update
+ end
+
+alt the command CRC in EEPLOM1 and the command CRC in EEPLOM2 aren't correct
+TXCOBC -> GroundStation: through the Modem(TX) and downlink (the signal is not correct)(TBD times?)
+TXCOBC -> TXCOBC: signal status update
+else
+TXCOBC -> GroundStation: through the Modem(TX) and downlink (the signal is correct)(TBD times?)
+TXCOBC -> TXCOBC: signal status update
+end
+@enduml
