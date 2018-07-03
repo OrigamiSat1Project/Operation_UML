@@ -1,123 +1,57 @@
 @startuml
-title sequence_map_Downlink
+title Downlink Pictures
+participant GS
+participant OBC
+participant RPI
+participant CIB
 
-actor GS
-
-GS -> OBC : Send Command that Donwlink Thumbnail
-activate OBC
-OBC -> RasPi : Choose data
-activate RasPi
-RasPi -> OBC : Send data
-deactivate RasPi
-OBC -> 5R8G : Send data
-deactivate OBC
-
-GS -> OBC : Change FROM address
-activate OBC
-OBC -> 5R8G : Change FROM address
-deactivate OBC
-opt Check CRC & Adrress
-    5R8G -> 5R8G : Change FROM address
-end
-
-GS -> OBC : Downlilnk Command & Time to finish
-activate OBC
-OBC -> 5R8G : Downlink Command
-
-OBC -> 5R8G : 5V switch ON
-activate 5R8G
-loop Donwlink
-    5R8G -> GS : Donwlink Thumbnail
-end
-note left of OBC : End of pass
-OBC -> 5R8G : 5V switch OFF
-deactivate 5R8G
-deactivate OBC
-||100||
-GS -> GS : Check Thumbnail
-GS -> GS : Choose screen resolution
-
-
-GS -> OBC : Send Command that Donwlink Files
-activate OBC
-OBC -> RasPi : Choose data
-activate RasPi
-RasPi -> OBC : Send data
-deactivate RasPi
-OBC -> 5R8G : Send data
-deactivate OBC
-
-GS -> OBC : Change FROM address
-activate OBC
-OBC -> 5R8G : Change FROM address
-deactivate OBC
-opt Check CRC & Adrress
-    5R8G -> 5R8G : Change FROM address
-end
-
-GS -> OBC : Downlilnk Command & Time to finish
-activate OBC
-OBC -> 5R8G : Downlink Command
-
-OBC -> 5R8G : 5V switch ON
-activate 5R8G
-loop Donwlink
-    5R8G -> GS : Donwlink Files
-end
-note left of OBC : End of pass
-OBC -> 5R8G : 5V switch OFF
-deactivate 5R8G
-deactivate OBC
-||100||
-
-GS -> GS : FM or 5R8G
-GS -> OBC : Send Command that Donwlink various data
-activate OBC
-OBC -> MDC : Choose data
-activate MDC
-MDC -> OBC : Send data
-deactivate MDC
-deactivate OBC
-
-alt 5R8G
-    OBC -> 5R8G : Send data
-    deactivate OBC
-
-    GS -> OBC : Change FROM address
+group Send Picture from RPI to OBC
+    GS -> OBC : Command : Supply power to RPI
     activate OBC
-    OBC -> 5R8G : Change FROM address
-    deactivate OBC
-    opt Check CRC & Adrress
-        5R8G -> 5R8G : Change FROM address
+    CIB -> RPI : Supply power
+    activate RPI
+    par HK telemetry
+        loop Send telemetry
+            RPI -> OBC : HK telemetry
+            ' FIXME
+            OBC -> OBC : Check something
+        end
+    else Pictures
+        OBC -> RPI : Command : Start send mode
+        RPI -> OBC : File telemetry(File list, File size)
+        OBC -> RPI : Choose picture
+        RPI -> OBC : Send picture
     end
-
-    GS -> OBC : Downlilnk Command & Time to finish
+    OBC -> CIB : Command : Shutdown
+    CIB -> RPI : Shutdown
+    deactivate RPI
+    deactivate OBC
+end
+||50||
+group Receive pictures in 5R8G's from
+    GS -> OBC : Command : Receive pitctures
     activate OBC
-    OBC -> 5R8G : Downlink Command
-
-    OBC -> 5R8G : 5V switch ON
+    OBC -> CIB : Command : Supply power to 5R8G
+    CIB -> 5R8G : Supply power
     activate 5R8G
-    loop Donwlink
-        5R8G -> GS : Donwlink various data
-    end
-    note left of OBC : End of pass
-    OBC -> 5R8G : 5V switch OFF
+    OBC -> 5R8G : Send picture(Thumbnbail, JPEG, H264, ECC)
+    CIB -> 5R8G : Shutdown
     deactivate 5R8G
     deactivate OBC
-    ||100||
-else FM
-    OBC -> CIB : Send data
-    deactivate OBC
-    GS -> OBC : Downlilnk Command
-    activate OBC
-    OBC -> CIB : Downlink Command
-    activate CIB
-    CIB -> GS : Donwlink various data
-    GS -> OBC : Finish donwlink
-    OBC -> CIB : Finish downlink
-    deactivate CIB
-    deactivate OBC
-    ||100||
 end
-
+||50||
+group Downlink from 5R8G to GS
+    GS -> OBC : Command : Downlink pictures
+    activate OBC
+    OBC -> CIB : Command : Supply power to 5R8G
+    CIB -> 5R8G : Supply power
+    activate 5R8G
+    OBC -> 5R8G : Command : Downlink
+    loop Until end of Pass
+        5R8G -> GS : Downlink
+    end
+    CIB -> 5R8G : Shutdown
+    deactivate 5R8G
+    deactivate OBC
+end
 @enduml
