@@ -1,0 +1,57 @@
+@startuml
+title Downlink Pictures
+participant GS
+participant OBC
+participant RPI
+participant CIB
+
+group Send Picture from RPI to OBC
+    GS -> OBC : Command : Supply power to RPI
+    activate OBC
+    CIB -> RPI : Supply power
+    activate RPI
+    par HK telemetry
+        loop Send telemetry
+            RPI -> OBC : HK telemetry
+            ' FIXME
+            OBC -> OBC : Check something
+        end
+    else Pictures
+        OBC -> RPI : Command : Start send mode
+        RPI -> OBC : File telemetry(File list, File size)
+        OBC -> RPI : Choose picture
+        RPI -> OBC : Send picture
+    end
+    OBC -> CIB : Command : Shutdown
+    CIB -> RPI : Shutdown
+    deactivate RPI
+    deactivate OBC
+end
+||50||
+group Receive pictures in 5R8G's from
+    GS -> OBC : Command : Receive pitctures
+    activate OBC
+    OBC -> CIB : Command : Supply power to 5R8G
+    CIB -> 5R8G : Supply power
+    activate 5R8G
+    OBC -> 5R8G : Send picture(Thumbnbail, JPEG, H264, ECC)
+    CIB -> 5R8G : Shutdown
+    deactivate 5R8G
+    deactivate OBC
+end
+||50||
+group Downlink from 5R8G to GS
+    GS -> OBC : Command : Downlink pictures
+    activate OBC
+    OBC -> CIB : Command : Supply power to 5R8G
+    CIB -> 5R8G : Supply power
+    activate 5R8G
+    OBC -> 5R8G : Command : Downlink
+    loop Until end of Pass
+        5R8G -> GS : Downlink
+    end
+    CIB -> 5R8G : Shutdown
+    deactivate 5R8G
+    deactivate OBC
+end
+@enduml
