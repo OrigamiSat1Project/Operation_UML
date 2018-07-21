@@ -1,0 +1,65 @@
+@startuml
+title TX_RX
+participant GS
+participant RXCOBC
+database EEPLOM1
+database EEPLOM2
+participant TXCOBC
+participant OBC
+
+== VHF uplink ==
+GS -> RXCOBC: Uplink through the Modem(RX)
+' note right: if it is the AX.25 protocol signals
+alt AX.25 protocol signals
+RXCOBC -> EEPLOM1: Write the command data with the specified address
+RXCOBC -> EEPLOM2: Writre the command data with the specified address
+else NOT Ax.25 protocol signals
+GS -> RXCOBC: Uplink through the Modem(RX)
+end
+RXCOBC -> TXCOBC: Send the command data address
+RXCOBC -> OBC: Send the command data address
+TXCOBC -> EEPLOM1: Read the comand
+TXCOBC -> EEPLOM1: Check the CRC of the comand
+
+TXCOBC -> TXCOBC: Update signal status
+
+ opt the command CRC in EEPLOM1 is NOT correct
+TXCOBC -> EEPLOM2: Read the comand
+TXCOBC -> EEPLOM2: Check the CRC of the comand
+TXCOBC -> TXCOBC: Update signal status
+ end
+
+alt the command CRC in EEPLOM1 and the command CRC in EEPLOM2 are correct
+TXCOBC -> GS: through the Modem(TX) and downlink (the signal is correct)(TBD times?)
+TXCOBC -> TXCOBC: signal status update
+else NOT correct
+TXCOBC -> GS: through the Modem(TX) and downlink (the signal is NOT correct)(TBD times?)
+TXCOBC -> TXCOBC: signal status update
+end
+
+
+
+== UHF downlink ==
+
+
+OBC -> OBC: Switch Multiplexer
+OBC -> TXCOBC: Downlink command and send EEPLOM address
+note left: after RXCOBC send OBC the command data address?
+OBC -> OBC: Switch Multiplexer
+TXCOBC -> EEPLOM1: Read that address
+TXCOBC -> TXCOBC: Signal status update
+opt the command CRC in EEPLOM1 is NOT correct
+TXCOBC -> EEPLOM2: Read the comand
+TXCOBC -> EEPLOM2: Check the CRC of the comand
+TXCOBC -> TXCOBC: Signal status update
+ end
+
+alt the command CRC in EEPLOM1 and the command CRC in EEPLOM2 are NOT correct
+TXCOBC -> GS: through the Modem(TX) and downlink (the signal is not correct)(TBD times?)
+TXCOBC -> TXCOBC: Signal status update
+else correct
+TXCOBC -> GS: through the Modem(TX) and downlink (the signal is correct)(TBD times?)
+TXCOBC -> TXCOBC: Signal status update
+end
+
+@enduml

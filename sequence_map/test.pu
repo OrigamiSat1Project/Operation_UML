@@ -1,6 +1,0 @@
-@startuml
-title sequence_map_Downlink
-地上局 -> OBC : ダウンリンクコマンド
-OBC -> 5R8G : ダウンリンクコマンド
-5R8G -> 地上局 : ダウンリンク
-@enduml
