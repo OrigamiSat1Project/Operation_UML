@@ -1,0 +1,157 @@
+@startuml
+title mast extension sequence
+
+participant GS
+participant CIB
+database EEPROM
+participant OBC
+participant RPI
+participant MDC
+
+activate OBC
+activate CIB
+==start mast extension sequence==
+GS -> OBC   : Uplink The Command
+OBC --> GS   : Downlink The Command Response
+==IMU function check==
+OBC -> OBC  : Check The Mode
+opt power shortage
+    OBC -> GS   : Downlink The Power Value
+    note over GS    : Return start mast extension sequence
+end
+
+OBC -> MDC  : Turn On MDC
+activate MDC
+MDC --> OBC : ACK
+OBC -> MDC  : Synchronize Time
+OBC -> MDC  : Transfer Measure IMU Command
+OBC -> CIB  : Transfer Measure IMU Command
+OBC -> MDC  : Transfer Send IMU Data Command
+MDC --> OBC : Send IMU Data
+CIB -> EEPROM : Save IMU Data
+OBC -> MDC  : Turn Off MDC
+deactivate MDC
+OBC -> GS   : Downlink The IMU Data
+GS  -> GS   : Check the status of IMU data
+opt IMU data are unexpected value
+    note over GS    : Return start mast extension sequence
+end
+
+==uplink synchronize time and unlock HRM command==
+GS -> OBC   : Uplink The Command
+OBC --> GS   : Downlink The Command Response
+
+==time sync and unlock HRM==
+OBC -> OBC  : Check The Mode
+opt power shortage
+    OBC -> GS   : Downlink The Power Value
+note over GS    : Return command uplink phase
+end
+
+OBC -> MDC  : Turn On MDC
+activate MDC
+MDC --> OBC : ACK
+OBC -> RPI  : Turn On RPI
+activate RPI
+RPI --> OBC : ACK
+OBC -> MDC  : Synchronize Time
+OBC -> RPI  : Synchronize Time
+OBC -> MDC  : Transfer Measure IMU Command
+OBC -> CIB  : Transfer Measure IMU Command
+OBC -> RPI  : Transfer Start Melting The Gut Command
+OBC -> RPI  : Transfer Stop Melting The Gut Command
+OBC -> MDC  : Transfer Send IMU Data Command
+MDC --> OBC : Send IMU Data
+CIB -> EEPROM : Save IMU Data
+OBC -> GS   : Downlink The IMU Data (UHF)
+opt HRM locked
+    note over GS        : Return command uplink phase
+end
+
+==uplink mast extension command==
+GS -> OBC   : Uplink The Command
+OBC --> GS   : Downlink The Command Response
+
+==mast extension==
+OBC -> MDC  : Synchronize Time
+OBC -> RPI  : Synchronize Time
+loop time < specified time
+    OBC -> OBC        : Check the time
+end
+
+OBC -> OBC  : Check The Mode
+opt power shortage
+    OBC -> GS   : Downlink The Power Value
+    note over GS    : Return command uplink phase
+end
+
+OBC -> MDC  : Transfer Measure IMU Command
+OBC -> CIB  : Transfer Measure IMU Command
+OBC -> RPI  : Transfer Start Mast Extension Command
+loop mast extension time < TBD[s]
+    OBC -> OBC        : Get Current And Encoder Value
+    opt Encoder Value is unexpected
+        OBC -> RPI  : Turn Off RPI
+        OBC -> MDC  : Turn Off MDC
+        OBC -> GS   : Downlink Encoder Value
+        note over GS    : Return command uplink phase
+    end
+end
+
+OBC -> RPI  : Transfer Stop Mast Extension Command
+OBC -> OBC  : Get Encoder Value
+OBC -> RPI  : Turn Off RPI
+deactivate RPI
+OBC -> MDC  : Transfer Send IMU Data Command
+MDC --> OBC : Send IMU Data
+OBC -> MDC  : Turn Off MDC
+CIB -> EEPROM : Save IMU Data
+deactivate MDC
+OBC -> GS   : Downlink The IMU And Encoder Data
+opt IMU and endoder data are unexpected
+    note over GS    : Return command uplink phase
+end
+
+opt Taking pictures is not implemented
+    alt Extension length > 1[m]
+        note over GS    : Finish mast extension sequence
+    else Extension length < 1[m]
+        note over GS    : Return command uplink phase
+    end
+end
+
+==uplink take pictures command==
+GS -> OBC   : Uplink The Command
+OBC --> GS   : Downlink The Command Response
+
+==take pictures with stereo camera==
+GS -> OBC   : Synchronize Time
+loop time < specified time
+    OBC -> OBC  : Check the time
+end
+
+OBC -> OBC  : Check The Mode
+opt power shortage
+    OBC -> GS   : Downlink The Power Value
+note over GS    : Return command uplink phase
+end
+
+OBC -> RPI  : Turn On RPI
+activate RPI
+RPI --> OBC : ACK
+OBC -> RPI  : Transfer Turn On LED Command
+OBC -> RPI  : Transfer Take A Picture Command (stereo camera)
+RPI -> RPI  : Resize Image
+OBC -> RPI  : Transfer Turn Off LED Command
+OBC -> RPI  : Transfer Send Image Data Command
+RPI --> OBC : Send Image Data (original and resized)
+OBC -> RPI  : RPI POWER OFF Command
+deactivate RPI
+OBC -> GS   : Downlink The Tmage Data
+alt Extension length > 1[m]
+    note over GS    : Finish mast extension sequence
+else Extension length < 1[m]
+    note over GS    : Return mast extension command uplink phase
+end
+
+@enduml
