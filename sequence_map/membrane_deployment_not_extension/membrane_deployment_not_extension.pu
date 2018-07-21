@@ -1,0 +1,99 @@
+smembrane_deployment_nominal.pu
+
+@startuml
+title membrane deployment
+
+participant GS
+participant CIB
+participant OBC
+participant RPI
+participant MDC
+
+== start the membrane deployment sequence ==
+activate OBC
+GS -> OBC: Uplink the command 
+OBC -> GS: Downlink the command 
+
+== IMU & M/S function test ==
+OBC -> MDC         : Send MDC power on command
+activate MDC
+MDC  -> OBC        : ack
+OBC -> MDC         : Send IMU & M/S function test command
+hnote over CIB,MDC : Sync with OBC
+MDC -> MDC : Measure M/S status
+MDC -> MDC : Measure IMU
+CIB -> CIB : Measure IMU
+MDC -> OBC        : Send IMU data and M/S status
+CIB -> OBC : Send IMU data
+OBC -> GS  : Downlink the IMU data and M/S status
+opt IMU data or M/S status is not correct
+    GS -> GS : Back to tha start the membrane deployment sequence border
+end
+OBC -> MDC         : Send MDC power off command
+deactivate MDC
+
+== Uplink the side camera function test command ==
+GS -> OBC  : Uplink the command
+OBC -> GS  : Downlink the command
+
+== side camera function test ==
+OBC -> RPI             : Send RPI power on
+activate RPI
+RPI -> OBC             : ack
+OBC -> RPI             : Send side camera function test command
+hnote over OBC,RPI          : sync with OBC
+RPI -> RPI          : LED ON
+RPI -> RPI          : Take the photo by side camera
+RPI -> RPI          : LED OFF
+RPI -> RPI          : Resize the photo data
+RPI -> OBC             : Send the photo data
+OBC -> RPI             : Send RPI power off command
+deactivate RPI
+OBC -> GS  : Send the photo data
+opt taking the photo is not successful
+    GS -> GS : Back to the uplink the side camera function test command border
+end
+
+== Uplink membrane deployment command ==
+GS -> OBC  : Uplink the command
+OBC -> GS  : Downlink the command
+
+== membrane deployment ==
+OBC -> MDC         : Send MDC power on command
+activate MDC
+MDC -> OBC         : ack
+OBC -> RPI             : Send RPI power on command
+activate RPI
+RPI -> OBC             : ack
+OBC -> MDC         : Send starting the membrane deployment command
+OBC -> RPI             : Send starting the membrane deployment command
+hnote over MDC, RPI     : sync with OBC
+loop IMU Measuring
+MDC -> MDC        : Start IMU measuring
+CIB -> CIB  : Start IMU measuring
+MDC -> MDC        : Melt the gut of membrane
+hnote over RPI,MDC      : wait the membrane deployment
+RPI -> RPI          : Finish taking the movie
+MDC -> MDC        : Finish measuring the IMU data
+end
+RPI -> RPI : LED ON
+RPI -> RPI          : Taking the photo by side camera
+RPI -> RPI          : LED OFF
+RPI -> RPI          : Resize the photo data
+RPI -> OBC             : Send the photo data
+OBC -> RPI             : Send RPI power off command
+deactivate RPI
+MDC -> OBC         : Send IMU data and M/S status
+OBC -> GS  : Downlink the data of IMU and M/S status
+OBC -> MDC         : Send MDC power off command
+deactivate MDC
+opt membrane deployment is not successful
+    GS -> GS : Back to the uplink membrane deployment command border
+end
+
+== Downlink the photo ==
+GS -> OBC  : Uplink the command
+OBC -> GS  : Downlink the photo data
+
+== end the membrane deployment sequence ==
+@enduml
