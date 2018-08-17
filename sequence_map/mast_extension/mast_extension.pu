@@ -54,6 +54,7 @@ MDC --> OBC : ACK
 OBC -> RPI  : Turn On RPI
 activate RPI
 RPI --> OBC : ACK
+OBC -> RPI  : Transfer RUN Mode Command
 OBC -> MDC  : Synchronize Time
 OBC -> RPI  : Synchronize Time
 OBC -> MDC  : Transfer Measure IMU Command
@@ -87,11 +88,14 @@ end
 
 OBC -> MDC  : Transfer Measure IMU Command
 OBC -> CIB  : Transfer Measure IMU Command
+OBC -> RPI  : Transfer Encoder On Command
+OBC -> OBC  : Turn On EPS SW1(Motor)
 OBC -> RPI  : Transfer Start Mast Extension Command
 loop mast extension time < TBD[s]
     OBC -> OBC        : Get Current And Encoder Value
     opt Encoder Value is unexpected
         OBC -> RPI  : Turn Off RPI
+        OBC -> OBC  : Turn Off EPS SW1(Motor)
         OBC -> MDC  : Turn Off MDC
         OBC -> GS   : Downlink Encoder Value
         note over GS    : Return command uplink phase
@@ -99,6 +103,7 @@ loop mast extension time < TBD[s]
 end
 
 OBC -> RPI  : Transfer Stop Mast Extension Command
+OBC -> OBC  : Turn Off EPS SW1(Motor)
 OBC -> OBC  : Get Encoder Value
 OBC -> RPI  : Turn Off RPI
 deactivate RPI
@@ -136,15 +141,18 @@ opt power shortage
 note over GS    : Return command uplink phase
 end
 
-OBC -> RPI  : Turn On RPI
+OBC -> RPI  : Turn On RPI(EPS SW5)
 activate RPI
 RPI --> OBC : ACK
+OBC -> RPI  : Transfer RUN Mode Command
+OBC -> OBC  : Turn On EPS SW6(LED)
 OBC -> RPI  : Transfer Turn On LED Command
 OBC -> RPI  : Transfer Take A Picture Command (stereo camera)
 RPI -> RPI  : Resize Image
 OBC -> RPI  : Transfer Turn Off LED Command
 OBC -> RPI  : Transfer Send Image Data Command
 RPI --> OBC : Send Image Data (original and resized)
+OBC -> OBC  : Turn Off EPS SW6(LED)
 OBC -> RPI  : RPI POWER OFF Command
 deactivate RPI
 OBC -> GS   : Downlink The Tmage Data
