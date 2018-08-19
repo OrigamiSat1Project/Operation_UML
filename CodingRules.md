@@ -1,6 +1,6 @@
 # Rules of name and order
 * モジュール名の統一（左から順）
-* GS,CIB,EPROM,OBC,RPI,MDC,(5R8G)
+* GS,COBC,EPROM,OBC,RPI,MDC,(5R8G)
 * ※二つ以上とやり取りしているモジュールは分け
 
 # Rules of grammer
