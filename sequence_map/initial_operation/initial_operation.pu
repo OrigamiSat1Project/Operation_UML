@@ -1,0 +1,112 @@
+@startuml
+title Initial Operation
+participant GroundStation
+participant 5R8G
+participant COBC
+database EEPROM
+participant OBC
+participant EPS
+participant RPI
+
+
+activate OBC
+
+OBC -> EEPROM: load EEPROM
+activate EEPROM
+EEPROM --> OBC: send EEPROM data
+deactivate EEPROM
+OBC -> OBC: Initialize OBC(HK,transceiver_ON？)
+OBC -> EPS: Initialize EPS(Check the Battery Voltage)
+activate EPS
+EPS --> OBC: send EPS Voltage data 
+deactivate EPS
+OBC ->OBC: check Satellite Operation mode(depend on EEPROM)
+
+== start checking whether antennae are developed or not ==
+
+alt MeltingCompletionFlag>=2
+OBC -> COBC: Restart telemetry
+note right: already complete melting wire
+COBC -> GroundStation: downlink
+GroundStation --> COBC: uplink
+COBC --> OBC: command of starting Regular Operation
+else MeltingCompletionFlag<=1
+loop repeat Melting Wire
+par loop melting
+alt Number of Melting Repetitions == TBD
+OBC -> EPS: change the melting system 
+activate EPS
+'SW
+EPS --> OBC: ack 
+deactivate EPS
+OBC -> EPS: melting wire for TBD seconds
+else Number of Melting Repetitions < TBD
+OBC -> EPS: melting wire for TBD seconds
+end
+else downlink CW and wait for receiving
+OBC -> COBC: accept uplink，CW(HK,Number of Melting Repetitions,...etc)down link 
+COBC -> GroundStation: Downlink
+opt Receive CW
+GroundStation --> COBC: uplink
+COBC --> OBC:  command of interrupting Melting Wire
+end
+end
+end
+end
+
+OBC -> EEPROM: write the MeltingCompletionFlag 
+note right: Receive the command of interrupting Melting Wire (break)
+
+== check FM communication ==
+
+GroundStation -> COBC: uplink
+COBC -> OBC : FM HK command 
+OBC --> COBC: send FM HK
+COBC --> GroundStation: downlink
+
+== check 5R8G communication ==
+
+GroundStation -> COBC: uplink
+COBC -> OBC: command of sending Mock picture
+OBC --> 5R8G: send Mock picture
+5R8G --> GroundStation: dounlink
+
+== check the part of Camera for extension startup ==
+
+GroundStation -> COBC: uplink
+COBC -> OBC: command of checking Camera for Extension 
+OBC -> RPI: send RPI_ON
+activate RPI
+RPI --> OBC: ack 
+OBC -> RPI: HK command 
+RPI --> OBC: send HK 
+OBC -> RPI: command of taking pictures 
+RPI --> OBC: send pictures 
+OBC -> RPI: send RPI_OFF 
+deactivate RPI
+
+OBC --> COBC: send HK of the part of Camera for extension 
+COBC --> GroundStation: downlink
+OBC --> 5R8G: send pictures
+5R8G --> GroundStation: downlink 
+
+== check the part of Side Camera startup ==
+
+GroundStation -> COBC: uplink
+COBC -> OBC: command of checking Side Camera 
+OBC -> RPI: send RPI_ON 
+activate RPI
+RPI --> OBC: ack 
+OBC -> RPI: HK command 
+RPI --> OBC: send HK 
+OBC -> RPI: command of taking pictures 
+RPI --> OBC: send pictures 
+OBC -> RPI: send RPI_OFF 
+deactivate RPI
+
+OBC --> COBC: send HK of the part of Side Camera 
+COBC --> GroundStation: downlink
+OBC --> 5R8G: send pictures
+5R8G --> GroundStation:downlink 
+
+@enduml
