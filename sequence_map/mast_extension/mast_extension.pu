@@ -2,14 +2,14 @@
 title mast extension sequence
 
 participant GS
-participant CIB
+participant COBC
 database EEPROM
 participant OBC
 participant RPI
 participant MDC
 
 activate OBC
-activate CIB
+activate COBC
 ==start mast extension sequence==
 GS -> OBC   : Uplink The Command
 OBC --> GS   : Downlink The Command Response
@@ -25,10 +25,10 @@ activate MDC
 MDC --> OBC : ACK
 OBC -> MDC  : Synchronize Time
 OBC -> MDC  : Transfer Measure IMU Command
-OBC -> CIB  : Transfer Measure IMU Command
+OBC -> COBC : Transfer Measure IMU Command
 OBC -> MDC  : Transfer Send IMU Data Command
 MDC --> OBC : Send IMU Data
-CIB -> EEPROM : Save IMU Data
+COBC -> EEPROM : Save IMU Data
 OBC -> MDC  : Turn Off MDC
 deactivate MDC
 OBC -> GS   : Downlink The IMU Data
@@ -58,12 +58,12 @@ OBC -> RPI  : Transfer RUN Mode Command
 OBC -> MDC  : Synchronize Time
 OBC -> RPI  : Synchronize Time
 OBC -> MDC  : Transfer Measure IMU Command
-OBC -> CIB  : Transfer Measure IMU Command
+OBC -> COBC  : Transfer Measure IMU Command
 OBC -> RPI  : Transfer Start Melting The Gut Command
 OBC -> RPI  : Transfer Stop Melting The Gut Command
 OBC -> MDC  : Transfer Send IMU Data Command
 MDC --> OBC : Send IMU Data
-CIB -> EEPROM : Save IMU Data
+COBC -> EEPROM : Save IMU Data
 OBC -> GS   : Downlink The IMU Data (UHF)
 opt HRM locked
     note over GS        : Return command uplink phase
@@ -87,7 +87,7 @@ opt power shortage
 end
 
 OBC -> MDC  : Transfer Measure IMU Command
-OBC -> CIB  : Transfer Measure IMU Command
+OBC -> COBC  : Transfer Measure IMU Command
 OBC -> RPI  : Transfer Encoder On Command
 OBC -> OBC  : Turn On EPS SW1(Motor)
 OBC -> RPI  : Transfer Start Mast Extension Command
@@ -110,7 +110,7 @@ deactivate RPI
 OBC -> MDC  : Transfer Send IMU Data Command
 MDC --> OBC : Send IMU Data
 OBC -> MDC  : Turn Off MDC
-CIB -> EEPROM : Save IMU Data
+COBC -> EEPROM : Save IMU Data
 deactivate MDC
 OBC -> GS   : Downlink The IMU And Encoder Data
 opt IMU and endoder data are unexpected
