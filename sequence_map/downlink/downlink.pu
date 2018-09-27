@@ -3,55 +3,40 @@ title Downlink Pictures
 participant GS
 participant OBC
 participant RPI
-participant CIB
+participant EPS
+participant EEPROM
 
-group Send Picture from RPI to OBC
-    GS -> OBC : Command : Supply power to RPI
-    activate OBC
-    CIB -> RPI : Supply power
-    activate RPI
-    par HK telemetry
-        loop Send telemetry
-            RPI -> OBC : HK telemetry
-            ' FIXME
-            OBC -> OBC : Check something
-        end
-    else Pictures
-        OBC -> RPI : Command : Start send mode
-        RPI -> OBC : File telemetry(File list, File size)
-        OBC -> RPI : Choose picture
-        RPI -> OBC : Send picture
+group Choose a picture
+    alt Know file name
+        GS -> GS : Choose a picture
+    else Unknow file name
+        GS -> OBC : Command : Tell me file name
+        OBC -> OBC : Make a file list
+        OBC -> EEPROM : Write the list
+        TX -> EEPROM : Read the list
+        TX -> GS : Send the list
+        GS -> GS : Check the list & choose a picture
     end
-    OBC -> CIB : Command : Shutdown
-    CIB -> RPI : Shutdown
-    deactivate RPI
-    deactivate OBC
+
+    GS -> RPI : Command : Send the picture to OBC
+    RPI -> OBC : Send the picture
 end
 ||50||
-group Receive pictures in 5R8G's from
-    GS -> OBC : Command : Receive pitctures
-    activate OBC
-    OBC -> CIB : Command : Supply power to 5R8G
-    CIB -> 5R8G : Supply power
-    activate 5R8G
-    OBC -> 5R8G : Send picture(Thumbnbail, JPEG, H264, ECC)
-    CIB -> 5R8G : Shutdown
-    deactivate 5R8G
-    deactivate OBC
+group Send the picture to 5R8G
+    GS -> OBC : Command : Send the picture to 5R8G
+    OBC -> 5R8G : Send the picture(Thumbnbail, JPEG, H264, ECC)
 end
 ||50||
 group Downlink from 5R8G to GS
-    GS -> OBC : Command : Downlink pictures
-    activate OBC
-    OBC -> CIB : Command : Supply power to 5R8G
-    CIB -> 5R8G : Supply power
+    GS -> OBC : Command : Downlink the picture
+    OBC -> EPS : Switch ON
+    EPS -> 5R8G : Supply power
     activate 5R8G
     OBC -> 5R8G : Command : Downlink
     loop Until end of Pass
         5R8G -> GS : Downlink
     end
-    CIB -> 5R8G : Shutdown
+    OBC -> EPS : Switch OFF
     deactivate 5R8G
-    deactivate OBC
 end
 @enduml
