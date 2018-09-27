@@ -67,10 +67,10 @@ end
 PlantUML version 1.2018.03(Fri Apr 06 01:59:15 JST 2018)
 (GPL source distribution)
 Java Runtime: Java(TM) SE Runtime Environment
-JVM: Java HotSpot(TM) 64-Bit Server VM
-Java Version: 1.8.0_171-b11
-Operating System: Windows 7
-OS Version: 6.1
+JVM: Java HotSpot(TM) Client VM
+Java Version: 1.8.0_181-b13
+Operating System: Windows 10
+OS Version: 10.0
 Default Encoding: MS932
 Language: ja
 Country: JP
