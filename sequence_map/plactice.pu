@@ -1,0 +1,96 @@
+@startuml
+title Initial Operation
+participant GS
+participant 5R8G
+participant COBC
+database EEPROM
+participant OBC
+participant EPS
+participant RPI
+
+== released from rocket ==
+activate OBC
+activate COBC
+activate EPS
+
+OBC -> EEPROM: load EEPROM
+activate EEPROM
+EEPROM --> OBC: send EEPROM data
+deactivate EEPROM
+OBC -> OBC: Initialize OBC(HK,transceiver_ON？)
+OBC -> EPS: Initialize EPS(Check the Battery Voltage)
+EPS --> OBC: send EPS Voltage data 
+OBC ->OBC: check Satellite Operation mode(depend on EEPROM)
+
+== start checking whether antenna are developed or not ==
+
+alt MeltingCompletionFlag >= 2
+    OBC -> GS: Restart telemetry
+    note right: already complete melting wire
+    GS -> OBC: Uplink command of starting Regular Operation
+
+else MeltingCompletionFlag<=1
+    loop repeat Melting Wire
+        par loop melting
+            alt Number of Melting Repetitions == TBD
+                OBC -> EPS: change the melting system 
+                EPS --> OBC: ack 
+                OBC -> EPS: melting wire for TBD seconds
+            else Number of Melting Repetitions < TBD
+                OBC -> EPS: melting wire for TBD seconds
+            end
+        else downlink CW and wait for receiving command
+            OBC -> GS: Downlink CW(HK,Number of Melting Repetitions,...etc)
+            OBC -> OBC: Wait uplink command
+            opt Receive CW
+                GS --> OBC: Uplink command of interrupting Melting Wire
+            end
+        end
+    end
+end
+
+OBC -> EEPROM: Write the MeltingCompletionFlag 
+note right: Receive the command of interrupting Melting Wire (break)
+
+== check FM communication ==
+
+GS -> OBC: Uplink command of downlink HK (FM)
+OBC --> GS: Downlink HK (FM)
+== check 5R8G communication ==
+
+GS -> OBC: Uplink command of sending Mock picture
+OBC --> 5R8G: send Mock picture
+5R8G --> GS: Downlink the data
+
+== check the part of Camera for extension startup ==
+
+GS -> OBC: Uplink command of checking Camera for Extension system
+OBC -> RPI: Turn On RPI
+activate RPI
+RPI --> OBC: Ack 
+OBC -> RPI: command of RUN mode 
+OBC -> RPI: command of taking pictures (stereo)
+RPI --> OBC: send pictures 
+OBC -> RPI: send RPI_OFF 
+deactivate RPI
+
+OBC --> GS: Downlink HK of the part of Camera for Extension system 
+OBC --> 5R8G: send pictures
+5R8G --> GS: Downlink 
+
+== check the part of Side Camera startup ==
+
+GS -> COBC: Uplink command of checking Side Camera
+OBC -> RPI: Turn On RPI 
+activate RPI
+RPI --> OBC: Ack  
+OBC -> RPI: command of taking pictures (side)
+RPI --> OBC: send pictures 
+OBC -> RPI: send RPI_OFF 
+deactivate RPI
+
+OBC --> GS: Downlink HK of the part of Camera for Extension system 
+OBC --> 5R8G: send pictures
+5R8G --> GS:downlink 
+
+@enduml

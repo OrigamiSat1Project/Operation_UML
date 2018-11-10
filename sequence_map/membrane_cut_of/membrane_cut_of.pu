@@ -1,0 +1,120 @@
+smembrane_cut_of.pu
+
+@startuml
+title membrane cut of sequence
+
+participant GS
+participant CIB
+participant OBC
+participant RPI
+participant MDC
+
+activate OBC
+activate CIB
+
+== start membrane cut of sequence ==
+GS -> OBC                   : Uplink the command
+OBC --> GS                   : Downlink the response command
+
+== IMU function test ==
+OBC -> MDC              : Send MDC power on command
+activate MDC
+MDC --> OBC              : ack
+OBC -> MDC              : Send IMU measure test command
+hnote over MDC,CIB      : sync with OBC
+MDC -> MDC              : Measure IMU
+MDC --> OBC              : Send IMU data
+OBC -> GS                   : Downlink IMU data
+
+opt IMU data is not correct
+    GS -> GS :Back to the start membrane cut of sequence border
+end
+
+OBC -> MDC              : Send MDC power off command
+deactivate MDC
+
+== uplink the melting the gut command ==
+GS -> OBC                   : Uplink the command
+OBC --> GS                   : Downlink the response command
+
+== melting the gut ==
+OBC -> MDC              : Send MDC power on command
+activate MDC
+OBC -> RPI                  : Send RPI power on command
+activate RPI
+OBC -> MDC              : Send melting gut command
+OBC -> RPI                  : Send melting gut command
+hnote over MDC, CIB     : sync with OBC
+loop IMU measuring
+    MDC -> MDC      : Start IMU measuring
+    CIB -> CIB      : Start IMU measuring
+    RPI -> RPI          : Melting gut
+    MDC -> MDC       : End IMU measuring
+    CIB -> CIB      : End IMU measuring
+end
+MDC --> OBC              : Send IMU data
+OBC -> GS                   : Downlink IMU data
+opt IMU data is not correct
+    GS -> GS :Back to the uplink the melting the gut command border
+end
+OBC -> RPI                  : Send RPI power off command
+deactivate RPI
+OBC -> MDC              : Send MDC poer off command
+deactivate MDC
+
+== uplink the cut of mast command ==
+GS -> OBC                   : Uplink the command
+OBC --> GS                   : Downlink the response command
+
+== cut of the mast ==
+OBC -> MDC              : Send MDC power on command
+activate MDC
+OBC -> RPI                  : Send RPI power on command
+activate RPI
+OBC -> MDC              : Send cut of the mast command
+OBC -> RPI                  : Send cut of the mast command
+hnote over MDC, CIB     : sync with OBC
+loop IMU measuring
+    MDC -> MDC      : Start IMU measuring
+    CIB -> CIB      : Start IMU measuring
+    RPI -> RPI      : Start mast extension
+    loop Watch encode data
+        opt encode is not correct
+            RPI -> RPI :error
+        end
+        RPI -> RPI  : End cutting must
+    end
+    MDC -> MDC       : End IMU measuring
+    CIB -> CIB      : End IMU measuring
+end
+RPI -> OBC                  : send encode data
+OBC -> RPI                  : RPI POWER OFF command
+deactivate RPI
+OBC -> MDC              : MDC POWER OFF command
+deactivate MDC
+MDC -> OBC              : send IMU data
+OBC -> GS                   : downlink the data of encode and IMU
+opt encode and IMU data is not correct
+    GS -> GS :Back to uplink the cut of mast command border
+end
+
+== uplink the camera check command ==
+GS -> OBC                   : uplink the command
+OBC -> GS                   : downlink the response command
+
+== check by camera ==
+OBC -> RPI                  : RPI POWER ON command
+activate RPI
+OBC -> RPI                  : check by camera command
+hnote over CIB,RPI          : sync with OBC
+RPI -> RPI                  : LED ON
+RPI -> RPI                  : take the phote with sutereo camera
+RPI -> RPI                  : resize the phote data
+RPI -> RPI                  : LED OFF
+RPI -> OBC                  : send photo data
+OBC -> RPI                  : RPI POWER OFF command
+deactivate RPI
+OBC -> GS                   : downlink the photo data
+opt cut off mast sequence is not success
+    GS -> GS :Back to start membrane cut of sequence border
+end
