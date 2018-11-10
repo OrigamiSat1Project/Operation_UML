@@ -4,101 +4,139 @@ smembrane_deployment_nominal.pu
 title membrane deployment
 
 participant GS
-participant CIB
+participant RX_COBC
+participant TX_COBC
+database EEPROM
 participant OBC
 participant RPI
 participant MDC
 
 == start the membrane deployment sequence ==
 activate OBC
-GS -> OBC: Uplink the command 
-OBC -> GS: Downlink the command 
+activate RX_COBC
+activate TX_COBC
+GS -> OBC           : Uplink the command 
+OBC -> GS           : Downlink the command 
 
 == IMU & M/S function test ==
-OBC -> MDC         : Send MDC power on command
-activate MDC
-MDC  -> OBC        : ack
-OBC -> MDC         : Send IMU & M/S function test command
-hnote over CIB,MDC : Sync with OBC
-MDC -> MDC : Measure M/S status
-MDC -> MDC : Measure IMU
-CIB -> CIB : Measure IMU
-MDC -> OBC        : Send IMU data and M/S status
-CIB -> OBC : Send IMU data
-OBC -> GS  : Downlink the IMU data and M/S status
-opt IMU data or M/S status is not correct
-    GS -> GS : Back to tha start the membrane deployment sequence border
+RX_COBC -> RX_COBC  : Check The Mode
+opt power shortage
+    TX_COBC -> GS   : Downlink The Power Value
+    note over GS    : Return start mast extension sequence
 end
-OBC -> MDC         : Send MDC power off command
+
+OBC -> MDC          : Turn On MDC
+activate MDC
+OBC -> MDC          : Synchronize Time
+OBC -> MDC          : Transfer Measure IMU Command
+OBC -> TX_COBC      : Transfer Measure IMU Command
+OBC -> MDC          : Transfer Send IMU Data Command
+MDC --> OBC         : Send IMU Data
+TX_COBC -> EEPROM   : Save IMU Data
+MDC -> OBC          : Send IMU data and M/S status
+OBC -> MDC          : Turn Off MDC
 deactivate MDC
+OBC -> GS           : Downlink The IMU Data and M/S Status
+GS  -> GS           : Check the status of IMU data
+opt IMU data are unexpected value
+    note over GS    : Return start mast extension sequence
+end
 
 == Uplink the camera function test command ==
-GS -> OBC  : Uplink the command
-OBC -> GS  : Downlink the command
+GS -> OBC           : Uplink the command
+OBC -> GS           : Downlink the command
 
 == camera function test ==
-OBC -> RPI             : Send RPI power on
+GS -> OBC           : Synchronize Time
+loop time < specified time
+    OBC -> OBC      : Check the time
+end
+
+RX_COBC -> RX_COBC  : Check The Mode
+opt power shortage
+    TX_COBC -> GS   : Downlink The Power Value
+    note over GS    : Return start mast extension sequence
+end
+
+OBC -> RPI          : Turn On RPI(EPS SW5)
 activate RPI
-RPI -> OBC             : ack
-OBC -> RPI             : Send camera function test command
-hnote over OBC,RPI          : sync with OBC
-RPI -> RPI          : LED ON
-RPI -> RPI          : Take the photo with sutereo camera
-RPI -> RPI          : Take the movie with movie camera
-RPI -> RPI          : LED OFF
-RPI -> RPI          : Resize the photo data
-RPI -> OBC             : Send the photo data
-OBC -> RPI             : Send RPI power off command
+RPI --> OBC         : Regular Telemetry
+OBC -> OBC          : Turn On EPS SW6(LED)
+OBC -> RPI          : Transfer Turn On LED Command
+OBC -> RPI          : Transfer Take a Picture Command (stereo camera)
+OBC -> RPI          : Transfer Resize Image
+OBC -> RPI          : Transfer Turn Off LED Command
+OBC -> RPI          : Transfer Send Image Data Command
+RPI --> OBC         : Send Image Data (original and resized)
+OBC -> RPI          : Transfer Take a Movie Command
+OBC -> RPI          : Transfer Divide Movie Command
+OBC -> RPI          : Transfer Send Movie Command
+RPI --> OBC         : Send Movie Data 
+OBC -> OBC          : Turn Off EPS SW6(LED)
+OBC -> RPI          : RPI POWER OFF Command
 deactivate RPI
-OBC -> GS  : Send the data of photo and movie
 opt taking the photo and movie is not successful
-    GS -> GS : Back to the uplink the camera function test command border
+    GS -> GS        : Return to the uplink the camera function test command border
 end
 
 == Uplink membrane deployment command ==
-GS -> OBC  : Uplink the command
-OBC -> GS  : Downlink the command
+GS -> OBC           : Uplink the command
+OBC -> GS           : Downlink the command
 
 == membrane deployment ==
-OBC -> MDC         : Send MDC power on command
-activate MDC
-MDC -> OBC         : ack
-OBC -> RPI             : Send RPI power on command
-activate RPI
-RPI -> OBC             : ack
-OBC -> MDC         : Send starting the membrane deployment command
-OBC -> RPI             : Send starting the membrane deployment command
-hnote over MDC, RPI     : sync with OBC
-RPI -> RPI          : LED ON
-loop taking the movie
-RPI -> RPI          : Start taking the movie
-loop IMU Measuring
-MDC -> MDC        : Start IMU measuring
-CIB -> CIB  : Start IMU measuring
-MDC -> MDC        : Melt the gut of membrane
-hnote over RPI,MDC      : wait the membrane deployment
-RPI -> RPI          : Finish taking the movie
-MDC -> MDC        : Finish measuring the IMU data
-end
-RPI -> RPI : Finish taking the movie
-end
-RPI -> RPI          : Taking the photo by sutereo camera
-RPI -> RPI          : LED OFF
-RPI -> RPI          : Resize the photo data
-RPI -> OBC             : Send the photo data
-OBC -> RPI             : Send RPI power off command
-deactivate RPI
-MDC -> OBC         : Send IMU data and M/S status
-OBC -> GS  : Downlink the data of IMU and M/S status
-OBC -> MDC         : Send MDC power off command
-deactivate MDC
-opt membrane deployment is not successful
-    GS -> GS : Back to the uplink membrane deployment command border
+loop time < specified time
+    OBC -> OBC      : Check the time
 end
 
+RX_COBC -> RX_COBC  : Check The Mode
+opt power shortage
+    TX_COBC -> GS   : Downlink The Power Value
+    note over GS    : Return start mast extension sequence
+end
+
+OBC -> MDC          : Turn On MDC
+activate MDC
+OBC -> RPI          : Turn On RPI
+activate RPI
+RPI -> OBC          : Regular Telemetry
+OBC -> MDC          : Synchronize Time
+OBC -> RPI          : Synchronize Time
+OBC -> OBC          : Turn On EPS SW6(LED)
+OBC -> RPI          : Transfer Turn On LED Command
+
+OBC -> RPI          : Transfer Take a Movie Command
+OBC -> MDC          : Transfer Measure IMU Command
+OBC -> TX_COBC      : Transfer Measure IMU Command
+OBC -> OBC          : Turn On EPS SW9(Membrane)
+loop time < melting time
+    OBC -> OBC      : Check the time
+end
+OBC -> OBC          : Turn Off EPS SW9(Membrane)
+TX_COBC -> EEPROM   : Save IMU Data
+OBC -> RPI          : Transfer Take A Picture Command (stereo camera)
+OBC -> RPI          : Transfer Turn Off LED Command
+OBC -> RPI          : Transfer Resize Image
+OBC -> RPI          : Transfer Send Image Data Command
+RPI --> OBC         : Send Image Data (original and resized)
+OBC -> OBC          : Turn Off EPS SW6(LED)
+OBC -> RPI          : RPI POWER OFF Command
+
+deactivate RPI
+OBC -> MDC          : Transfer Send IMU Data Command
+MDC --> OBC         : Send IMU Data and M/S status
+OBC -> MDC          : Turn Off MDC
+deactivate MDC
+
+opt membrane deployment is not successful
+    GS -> GS        : Back to the uplink membrane deployment command border
+end
+
+OBC -> OBC          : Get Max Value of IMU (MDC)
+OBC -> OBC          : Get Max Value of IMU (TX_COBC)
+
 == Downlink the photo and movie ==
-GS -> OBC  : Uplink the command
-OBC -> GS  : Downlink the data of photo and movie
+GS -> OBC           : Uplink the command
+OBC -> GS           : Downlink the data of photo and movie
 
 == end the membrane deployment sequence ==
 @enduml

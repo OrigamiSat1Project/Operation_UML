@@ -103,7 +103,7 @@ opt power shortage
 end
 
 OBC -> MDC          : Transfer Measure IMU Command
-OBC -> RX_COBC      : Transfer Measure IMU Command
+OBC -> TX_COBC      : Transfer Measure IMU Command
 OBC -> OBC          : Turn On EPS SW1(Motor)
 OBC -> RPI          : Transfer Start Mast Extension Command
 loop mast extension time < TBD[s]
@@ -118,6 +118,7 @@ loop mast extension time < TBD[s]
 end
 
 OBC -> RPI          : Transfer Stop Mast Extension Command
+TX_COBC -> EEPROM   : Save IMU Data
 OBC -> OBC          : Turn Off EPS SW1(Motor)
 OBC -> OBC          : Get Encoder Value
 OBC -> RPI          : Turn Off RPI
@@ -125,7 +126,7 @@ deactivate RPI
 OBC -> MDC          : Transfer Send IMU Data Command
 MDC --> OBC         : Send IMU Data
 OBC -> MDC          : Turn Off MDC
-TX_COBC -> EEPROM   : Save IMU Data
+
 deactivate MDC
 
 OBC -> OBC          : Get Max Value of IMU (MDC)
